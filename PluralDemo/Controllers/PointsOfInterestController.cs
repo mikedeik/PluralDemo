@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PluralDemo.Models;
 using Microsoft.AspNetCore.JsonPatch;
+using PluralDemo.Services;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,11 +13,18 @@ namespace PluralDemo.Controllers
     {
 
         private readonly ILogger<PointsOfInterestController> _logger;
+        private readonly ISendMail _sendMailService;
+        private readonly CityDataStore _cityDataStore;
 
         public PointsOfInterestController(
-            ILogger<PointsOfInterestController> logger)
+            ILogger<PointsOfInterestController> logger,
+            ISendMail sendMail,
+            CityDataStore citiesDataStore)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _sendMailService = sendMail ?? throw new ArgumentNullException(nameof(sendMail));
+            _cityDataStore = citiesDataStore ?? throw new ArgumentNullException(nameof(_cityDataStore));
+
         }
 
         [HttpGet]
@@ -25,7 +33,7 @@ namespace PluralDemo.Controllers
             try
             {
 
-                var city = CityDataStore.Current.Cities
+                var city = _cityDataStore.Cities
                 .FirstOrDefault<CityDto>(c => c.Id == cityId);
 
                 if (city == null)
@@ -46,7 +54,7 @@ namespace PluralDemo.Controllers
         [HttpGet("{poiId}", Name = "GetPointOfInterest")]
         public ActionResult<PointOfInterestDto> GetPointOfInterest(int cityId, int poiId)
         {
-            var city = CityDataStore.Current.Cities
+            var city = _cityDataStore.Cities
                 .FirstOrDefault<CityDto>(c => c.Id == cityId);
 
             if (city == null)
@@ -71,7 +79,7 @@ namespace PluralDemo.Controllers
             int cityId,
             PointOfInterestCreateDto poi)
         {
-            var city = CityDataStore.Current.Cities
+            var city = _cityDataStore.Cities
                 .FirstOrDefault(c => c.Id == cityId);
 
             if (city == null)
@@ -80,7 +88,7 @@ namespace PluralDemo.Controllers
             }
 
             // dump way
-            int newId = CityDataStore.Current.Cities
+            int newId = _cityDataStore.Cities
                 .SelectMany(c => c.PointsOfInterest).Max(p => p.Id) + 1;
 
 
@@ -108,7 +116,7 @@ namespace PluralDemo.Controllers
            int poiId,
            PointOfInterestCreateDto newPoi)
         {
-            var city = CityDataStore.Current.Cities
+            var city = _cityDataStore.Cities
                 .FirstOrDefault(c => c.Id == cityId);
 
             if (city == null)
@@ -136,7 +144,7 @@ namespace PluralDemo.Controllers
             int poiId,
             JsonPatchDocument<PointOfInterestCreateDto> patchDocument)
         {
-            var city = CityDataStore.Current.Cities
+            var city = _cityDataStore.Cities
                 .FirstOrDefault(c => c.Id == cityId);
 
             if (city == null)
@@ -180,7 +188,7 @@ namespace PluralDemo.Controllers
             int cityId,
             int poiId)
         {
-            var city = CityDataStore.Current.Cities
+            var city = _cityDataStore.Cities
                .FirstOrDefault(c => c.Id == cityId);
 
             if (city == null)
@@ -198,6 +206,7 @@ namespace PluralDemo.Controllers
 
             city.PointsOfInterest.Remove(pointOfInterestFromStore);
 
+            _sendMailService.Send("POI Deleted", $"Point of interest  {pointOfInterestFromStore.Name} with Id {pointOfInterestFromStore.Id} was deleted!");
             return NoContent();
 
         }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.StaticFiles;
+using PluralDemo;
+using PluralDemo.Services;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -23,7 +25,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
 
+#if DEBUG
+builder.Services.AddTransient<ISendMail, LocalMailService>();
+#else
+builder.Services.AddTransient<ISendMail, CloudMailService>();
+#endif
+
+builder.Services.AddSingleton<CityDataStore>();
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -6,7 +6,7 @@ namespace PluralDemo
 	public class CityDataStore
 	{
 		public List<CityDto> Cities { get; set; }
-		public static CityDataStore Current { get; } = new CityDataStore();
+		//public static CityDataStore Current { get; } = new CityDataStore();
 		public CityDataStore()
 		{
 			Cities = new List<CityDto>

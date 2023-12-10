@@ -8,20 +8,22 @@ namespace PluralDemo.Controllers
 	[Route("api/cities")]
 	public class CitiesController: ControllerBase
 	{
-		public CitiesController()
+		private readonly CityDataStore _citiesDataStore;
+		public CitiesController(CityDataStore cityDataStore)
 		{
-		}
+            _citiesDataStore = cityDataStore ?? throw new ArgumentNullException(nameof(_citiesDataStore));
+        }
 
 		[HttpGet]
 		public ActionResult<IEnumerable<CityDto>> GetCities()
 		{
-			return Ok(CityDataStore.Current.Cities);
+			return Ok(_citiesDataStore.Cities);
 		}
 
 		[HttpGet("{id}")]
 		public ActionResult<CityDataStore> GetCity(int id)
 		{
-			var city = CityDataStore.Current.Cities.FirstOrDefault(c => c.Id == id);
+			var city = _citiesDataStore.Cities.FirstOrDefault(c => c.Id == id);
 
 
 			
