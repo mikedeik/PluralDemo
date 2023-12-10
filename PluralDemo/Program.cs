@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using PluralDemo;
+using PluralDemo.DbContexts;
 using PluralDemo.Services;
 using Serilog;
 
@@ -32,6 +35,10 @@ builder.Services.AddTransient<ISendMail, CloudMailService>();
 #endif
 
 builder.Services.AddSingleton<CityDataStore>();
+
+var connectionString = builder.Configuration.GetConnectionString("SQlServerConnection");
+
+builder.Services.AddDbContext<CityInfoContext>(options => options.UseSqlServer(connectionString));
 var app = builder.Build();
 
 
