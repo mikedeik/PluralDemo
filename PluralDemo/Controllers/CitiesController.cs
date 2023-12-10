@@ -1,6 +1,8 @@
 ﻿using System;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using PluralDemo.Models;
+using PluralDemo.Services;
 
 namespace PluralDemo.Controllers
 {
@@ -8,27 +10,39 @@ namespace PluralDemo.Controllers
 	[Route("api/cities")]
 	public class CitiesController: ControllerBase
 	{
-		private readonly CityDataStore _citiesDataStore;
-		public CitiesController(CityDataStore cityDataStore)
+
+		private readonly ICityInfoRepository _citiesInfoRepository;
+		private readonly IMapper _mapper;
+
+		public CitiesController(ICityInfoRepository cityInfoRepository,
+			IMapper mapper)
 		{
-            _citiesDataStore = cityDataStore ?? throw new ArgumentNullException(nameof(_citiesDataStore));
+            _citiesInfoRepository = cityInfoRepository ?? throw new ArgumentNullException(nameof(cityInfoRepository));
+			_mapper = mapper ?? throw new ArgumentNullException(nameof(_mapper));
         }
 
 		[HttpGet]
-		public ActionResult<IEnumerable<CityDto>> GetCities()
+		public async Task<ActionResult<IEnumerable<CityWithoutPoisDto>>> GetCities()
 		{
-			return Ok(_citiesDataStore.Cities);
+			var citiyEntities = await _citiesInfoRepository.GetCitiesAsync();
+		
+			return Ok(_mapper.Map<IEnumerable<CityWithoutPoisDto>>(citiyEntities));
 		}
 
 		[HttpGet("{id}")]
-		public ActionResult<CityDataStore> GetCity(int id)
-		{
-			var city = _citiesDataStore.Cities.FirstOrDefault(c => c.Id == id);
-
-
+		public async Task<IActionResult> GetCity(int id, bool includePois = false) {
 			
-			return city == null ? NotFound(new { message = "City not found"}) : Ok(city);
-            
+			var city = await _citiesInfoRepository.GetCityAsync(id, includePois);
+
+			if(city == null) {
+				return NotFound();
+			}
+
+			if(includePois) {
+				return Ok(_mapper.Map<CityDto>(city));
+			}
+
+			return Ok(_mapper.Map<CityWithoutPoisDto>(city));
 		}
 	}
 }
